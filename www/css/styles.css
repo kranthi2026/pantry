@@ -213,6 +213,7 @@ mark { background: var(--highlight); color: var(--ink); font-weight: 700; border
 }
 .shops-header .title-block { flex: 1; }
 .shops-header .round-btn { background: var(--bg); }
+.shops-header .round-btn.tile { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
 .round-btn.back { width: 48px; height: 48px; border-radius: 24px; }
 .round-btn.back svg { width: 22px; height: 22px; stroke-width: 2.4; }
 

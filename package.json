@@ -1,0 +1,24 @@
+{
+  "name": "pantry",
+  "version": "1.0.0",
+  "description": "Pantry - a voice shopping list. Say an item and a shop, and it is filed under that shop.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve www -l 5173",
+    "test": "node --test tests/parser.test.mjs",
+    "android": "npx cap add android && npx cap sync android && npx cap open android",
+    "ios": "npx cap add ios && npx cap sync ios && npx cap open ios",
+    "sync": "npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/preferences": "^8.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0"
+  }
+}

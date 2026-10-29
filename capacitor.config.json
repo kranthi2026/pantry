@@ -1,0 +1,12 @@
+{
+  "appId": "com.lakshmikranthi.pantry",
+  "appName": "Pantry",
+  "webDir": "www",
+  "backgroundColor": "#F4F6F3",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  }
+}

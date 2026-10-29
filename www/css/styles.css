@@ -71,15 +71,12 @@ h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line
   flex: none;
 }
 .round-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-.round-btn.shop-btn { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
-.round-btn.shop-btn svg { width: 21px; height: 21px; }
-.round-btn.shop-btn .plus {
-  position: absolute; right: -4px; top: -4px;
-  width: 18px; height: 18px; border-radius: 9px;
-  background: var(--accent); color: #fff; border: 2px solid var(--bg);
-  display: flex; align-items: center; justify-content: center;
+.shops-pill {
+  height: 44px; padding: 0 16px 0 14px; border-radius: 22px;
+  background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--accent);
+  display: flex; align-items: center; gap: 7px;
+  font-size: 15px; font-weight: 700; flex: none;
 }
-.round-btn.shop-btn .plus svg { width: 10px; height: 10px; stroke-width: 4; }
 .round-btn.dark { background: rgba(255,255,255,0.12); border: 0; color: #fff; }
 .badge {
   position: absolute; top: -4px; right: -4px;
@@ -361,6 +358,14 @@ mark { background: var(--highlight); color: var(--ink); font-weight: 700; border
 .toast span { flex: 1; padding: 10px 0; }
 .toast button { border: 0; background: transparent; color: var(--mint); font-weight: 700; min-height: 44px; padding: 0 10px; }
 
+.home-header h1, .home-header .subtle { white-space: nowrap; }
+@media (max-width: 380px) {
+  .home-header { padding-left: 16px; padding-right: 12px; gap: 8px; }
+  .home-header h1 { font-size: 26px; }
+  .home-header .subtle { font-size: 13px; }
+  .header-actions { gap: 6px; }
+  .shops-pill { padding: 0 12px 0 10px; font-size: 14px; gap: 5px; }
+}
 @media (min-width: 420px) {
   :root { --rail-w: 170px; }
 }

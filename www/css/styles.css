@@ -74,7 +74,7 @@ h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line
 .round-btn.shop-btn { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
 .round-btn.shop-btn svg { width: 21px; height: 21px; }
 .round-btn.shop-btn .plus {
-  position: absolute; right: -3px; bottom: -3px;
+  position: absolute; right: -4px; top: -4px;
   width: 18px; height: 18px; border-radius: 9px;
   background: var(--accent); color: #fff; border: 2px solid var(--bg);
   display: flex; align-items: center; justify-content: center;
@@ -92,7 +92,7 @@ h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line
 
 /* ---------- home ---------- */
 .home-header {
-  padding: calc(20px + var(--safe-top)) 16px 12px 20px;
+  padding: calc(20px + var(--safe-top)) 16px 16px 20px;
   display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
 }
 .title-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

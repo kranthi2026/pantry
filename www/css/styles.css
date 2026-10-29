@@ -71,6 +71,15 @@ h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line
   flex: none;
 }
 .round-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.round-btn.shop-btn { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+.round-btn.shop-btn svg { width: 21px; height: 21px; }
+.round-btn.shop-btn .plus {
+  position: absolute; right: -3px; bottom: -3px;
+  width: 18px; height: 18px; border-radius: 9px;
+  background: var(--accent); color: #fff; border: 2px solid var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.round-btn.shop-btn .plus svg { width: 10px; height: 10px; stroke-width: 4; }
 .round-btn.dark { background: rgba(255,255,255,0.12); border: 0; color: #fff; }
 .badge {
   position: absolute; top: -4px; right: -4px;

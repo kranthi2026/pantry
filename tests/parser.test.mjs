@@ -32,4 +32,16 @@ test('new shop command', () => {
 });
 test('add misheard as adam', () => check('Adam iron white shelves to Walmart', 'walmart', ['Iron white shelves']));
 test('add to shop', () => check('add iron white shelves to Walmart', 'walmart', ['Iron white shelves']));
+const withLivya = [...DEFAULT_SHOPS.slice(0, -2), { id: 'livya', name: 'Livya', color: 'blue', aliases: [] }, ...DEFAULT_SHOPS.slice(-2)];
+const checkL = (sentence, shopId, items) => {
+  const r = parse(sentence, withLivya);
+  assert.equal(r.shopId, shopId, `shop for "${sentence}"`);
+  assert.deepEqual(r.items, items, `items for "${sentence}"`);
+};
+test('Livya exact', () => checkL('add lunch box under Livya', 'livya', ['Lunch box']));
+test('Livya heard as Livia', () => checkL('add lunch box under Livia', 'livya', ['Lunch box']));
+test('Livya heard as Olivia', () => checkL('add lunch box under Olivia', 'livya', ['Lunch box']));
+test('name said twice', () => checkL('Olivia food leaked under Olivia', 'livya', ['Food leaked']));
+test('olive oil is not Livya', () => checkL('buy olive oil from Costco', 'costco', ['Olive oil']));
+test('Livya items stay items', () => checkL('buy love bites cereal', 'unsorted', ['Love bites cereal']));
 test('empty',() => assert.equal(parse('   ', shops).type, 'empty'));

@@ -84,55 +84,64 @@ function stripTrailing(text, words) {
   return t;
 }
 
-// Finds which shop the sentence mentions. Exact name/alias match first,
-// then a forgiving match so "wallmart" or "croger" still find the shop.
+// Rough "sounds like" key: drop vowels, merge similar letters.
+// "Olivia", "Livia" and "Livya" all become "lv".
+function soundKey(s) {
+  return s
+    .replace(/\s/g, '')
+    .replace(/ph/g, 'f')
+    .replace(/ck|q|c(?=[aou]|$)/g, 'k')
+    .replace(/[aeiouyh]/g, '')
+    .replace(/(.)\1+/g, '$1');
+}
+
+function similar(heard, name) {
+  const a = heard.replace(/\s/g, '');
+  const b = name.replace(/\s/g, '');
+  if (a === b) return true;
+  if (b.length < 5) return false;               // short names must match exactly
+  const d = levenshtein(a, b);
+  if (d <= 1) return true;
+  const ka = soundKey(a);
+  return d <= 2 && ka.length >= 2 && ka === soundKey(b);
+}
+
+// Finds which shop the sentence mentions. Exact name/alias first, then a
+// forgiving "sounds like" match so "wallmart", "croger" or "Olivia" (for Livya)
+// still find the shop. If a shop is named more than once, the one after
+// "from / under / to / at" wins, otherwise the last one.
 export function findShop(text, shops) {
   const norm = normalize(text);
-  let best = null;
+  const words = [];
+  norm.replace(/[^\s,]+/g, (w, offset) => { words.push({ w, offset }); return w; });
+  const found = [];
 
   for (const shop of shops) {
-    const names = [shop.name, ...(shop.aliases || [])].map(normalize).filter(Boolean);
-    for (const name of names) {
-      const re = new RegExp('(^|\\s)' + escapeRe(name) + '(?=\\s|$|,)');
-      const m = re.exec(norm);
-      if (m && (!best || name.length > best.phrase.length)) {
-        best = { shop, phrase: name, index: m.index + m[1].length };
-      }
-    }
-  }
-  if (best) return best;
-
-  // Forgiving match: compare each word (or pair of words) with each shop name.
-  const words = norm.replace(/,/g, ' ').split(' ').filter(Boolean);
-  for (const shop of shops) {
-    if (shop.system) continue;
     const names = [shop.name, ...(shop.aliases || [])].map(normalize).filter(Boolean);
     for (const name of names) {
       const size = name.split(' ').length;
-      if (name.replace(/\s/g, '').length < 5) continue;
-      for (let i = 0; i + size <= words.length; i++) {
-        const chunk = words.slice(i, i + size).join(' ');
-        const squashedChunk = chunk.replace(/\s/g, '');
-        const squashedName = name.replace(/\s/g, '');
-        const close = levenshtein(chunk, name) <= 1 || squashedChunk === squashedName || levenshtein(squashedChunk, squashedName) <= 1;
-        if (close) {
-          const index = norm.indexOf(chunk);
-          return { shop, phrase: chunk, index };
-        }
-      }
-      // "wal mart" said as two words for a one-word shop name.
-      if (size === 1) {
-        for (let i = 0; i + 2 <= words.length; i++) {
-          const pair = words[i] + words[i + 1];
-          if (levenshtein(pair, name) <= 1) {
-            const chunk = words[i] + ' ' + words[i + 1];
-            return { shop, phrase: chunk, index: norm.indexOf(chunk) };
-          }
+      for (let i = 0; i < words.length; i++) {
+        // try the same number of words as the name, and one extra word ("wal mart")
+        for (const span of size === 1 ? [1, 2] : [size]) {
+          if (i + span > words.length) continue;
+          const chunkWords = words.slice(i, i + span);
+          const chunk = chunkWords.map((x) => x.w).join(' ');
+          const exact = chunk === name;
+          if (!exact && (shop.system || !similar(chunk, name))) continue;
+          const prev = i > 0 ? words[i - 1].w : '';
+          found.push({
+            shop, phrase: chunk, index: chunkWords[0].offset, wordIndex: i,
+            exact, afterPrep: SHOP_PREPS.includes(prev), len: name.length
+          });
         }
       }
     }
   }
-  return null;
+  if (!found.length) return null;
+  found.sort((x, y) =>
+    (y.afterPrep - x.afterPrep) || (y.exact - x.exact) || (y.wordIndex - x.wordIndex) || (y.len - x.len));
+  const best = found[0];
+  return { shop: best.shop, phrase: best.phrase, index: best.index };
 }
 
 function removeShopPhrase(norm, match) {
@@ -189,6 +198,10 @@ export function parse(sentence, shops) {
   if (match) {
     shopId = match.shop.id;
     rest = removeShopPhrase(norm, match);
+    // "Livya lunch box under Livya": drop the repeated shop name at the start too.
+    const names = [match.shop.name, ...(match.shop.aliases || [])].map(normalize);
+    const first = rest.split(' ')[0] || '';
+    if (first && names.some((n) => n === first || similar(first, n))) rest = rest.slice(first.length).trim();
   }
 
   if (shopId === 'reminder') {

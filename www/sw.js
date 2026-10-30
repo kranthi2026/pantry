@@ -1,5 +1,5 @@
 // Keeps Pantry working offline when installed from the browser.
-const CACHE = 'pantry-v3';
+const CACHE = 'pantry-v4';
 const FILES = [
   './',
   './index.html',
@@ -31,7 +31,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-cache' })
       .then((res) => {
         if (res.ok && new URL(event.request.url).origin === location.origin) {
           const copy = res.clone();

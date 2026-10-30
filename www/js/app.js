@@ -113,8 +113,9 @@ function renderHome() {
     if (!items.length) continue;
     anyOpen = true;
     html += `<section class="group"><h2 class="group-label">${esc(shop.name)} · ${items.length}</h2><ul class="item-list">` +
-      items.map((i) => `<li><button type="button" class="item-btn" data-toggle="${i.id}" aria-label="Mark ${esc(i.text)} bought">
-        <span class="box" aria-hidden="true"></span><span class="item-text">${highlight(i.text, q)}</span></button></li>`).join('') +
+      items.map((i) => `<li class="item-row">
+        <button type="button" class="check-btn" data-toggle="${i.id}" aria-label="Mark ${esc(i.text)} bought"><span class="box" aria-hidden="true"></span></button>
+        <button type="button" class="text-btn" data-edit-item="${i.id}" aria-label="Edit ${esc(i.text)}"><span class="item-text">${highlight(i.text, q)}</span></button></li>`).join('') +
       '</ul></section>';
   }
 
@@ -135,7 +136,7 @@ function renderHome() {
     html += `<p class="empty-note">${q ? 'Only bought items match.' : 'All done here!'}</p>`;
   }
 
-  if (anyOpen) html += '<p class="tip">Tap an item when bought · press and hold to edit</p>';
+  if (anyOpen) html += '<p class="tip">Tick the box when bought · tap an item to edit</p>';
 
   if (done.length) {
     html += `<section class="done-section" aria-label="Done"><div class="done-head">
@@ -143,8 +144,9 @@ function renderHome() {
         <button type="button" class="pill-btn" data-action="clear">Clear</button></div><ul class="done-list">` +
       done.map((i) => {
         const shop = shopById(i.shopId);
-        return `<li><button type="button" class="item-btn" data-toggle="${i.id}" aria-label="Put ${esc(i.text)} back on the list">
-          <span class="box" aria-hidden="true">${ICONS.check}</span><span class="item-text">${highlight(i.text, q)}</span>
+        return `<li class="item-row">
+          <button type="button" class="check-btn" data-toggle="${i.id}" aria-label="Put ${esc(i.text)} back on the list"><span class="box" aria-hidden="true">${ICONS.check}</span></button>
+          <button type="button" class="text-btn" data-edit-item="${i.id}" aria-label="Edit ${esc(i.text)}"><span class="item-text">${highlight(i.text, q)}</span>
           <span class="from">${esc(shop ? shop.name : '')}</span></button></li>`;
       }).join('') + '</ul></section>';
   }
@@ -238,36 +240,7 @@ $('add-form').addEventListener('submit', async (e) => {
   toast(`Added ${text} to ${shopById(shopId).name}`, restore(snap));
 });
 
-// ---------------------------------------------------------------- long-press an item to edit it
-let pressTimer = null;
-let suppressClick = false;
-let pressStart = null;
-$('list').addEventListener('pointerdown', (e) => {
-  const btn = e.target.closest('[data-toggle]');
-  if (!btn) return;
-  suppressClick = false;
-  pressStart = { x: e.clientX, y: e.clientY };
-  clearTimeout(pressTimer);
-  pressTimer = setTimeout(() => {
-    suppressClick = true;
-    if (navigator.vibrate) navigator.vibrate(15);
-    openEdit(btn.dataset.toggle);
-  }, 500);
-});
-const cancelPress = () => clearTimeout(pressTimer);
-$('list').addEventListener('pointerup', cancelPress);
-$('list').addEventListener('pointercancel', cancelPress);
-$('list').addEventListener('pointermove', (e) => {
-  if (pressStart && Math.hypot(e.clientX - pressStart.x, e.clientY - pressStart.y) > 10) cancelPress();
-});
-$('list').addEventListener('contextmenu', (e) => {
-  const btn = e.target.closest('[data-toggle]');
-  if (!btn) return;
-  e.preventDefault();
-  cancelPress();
-  if (!suppressClick) { suppressClick = true; openEdit(btn.dataset.toggle); }
-});
-
+// ---------------------------------------------------------------- edit an item (tap its name)
 let editingItemId = null;
 function openEdit(id) {
   hideToast();
@@ -307,8 +280,9 @@ $('edit-delete').addEventListener('click', async () => {
 });
 
 $('list').addEventListener('click', async (e) => {
+  const editBtn = e.target.closest('[data-edit-item]');
+  if (editBtn) { openEdit(editBtn.dataset.editItem); return; }
   const toggle = e.target.closest('[data-toggle]');
-  if (toggle && suppressClick) { suppressClick = false; return; }
   if (toggle) {
     const item = data.items.find((i) => i.id === toggle.dataset.toggle);
     if (!item) return;

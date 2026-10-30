@@ -394,7 +394,19 @@ mark { background: var(--highlight); color: var(--ink); font-weight: 700; border
   height: 48px; padding: 0 12px; border: 1px solid var(--input-line); border-radius: 12px;
   font: inherit; font-size: 16px; background: #fff; color: var(--ink);
 }
-.item-btn { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+/* checkbox ticks; the name opens edit */
+.item-row { display: flex; align-items: stretch; }
+.check-btn {
+  flex: none; width: 44px; min-height: 44px; border: 0; background: transparent; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.check-btn .box { width: 22px; height: 22px; border-radius: 6px; }
+.check-btn:active .box { background: var(--accent-soft); border-color: var(--accent); }
+.text-btn {
+  flex: 1; min-width: 0; border: 0; background: transparent; text-align: left;
+  display: flex; align-items: center; gap: 8px; padding: 0 10px 0 0; min-height: 44px;
+}
+.text-btn:active { background: var(--line-soft); }
 
 /* ---------- toast ---------- */
 .toast {

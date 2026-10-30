@@ -356,7 +356,7 @@ mark { background: var(--highlight); color: var(--ink); font-weight: 700; border
   background: var(--accent-soft); color: var(--accent-dark);
   border-radius: 999px; padding: 4px 4px 4px 14px; font-size: 15px; font-weight: 600;
 }
-.chip button { width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center; padding: 0; }
+.chip button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center; padding: 0; }
 .chip button svg { width: 14px; height: 14px; stroke-width: 2.6; }
 .result-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .result-buttons .ghost-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -372,7 +372,16 @@ mark { background: var(--highlight); color: var(--ink); font-weight: 700; border
 }
 .said-hint { margin: 0; font-size: 13px; color: #A9C2B7; }
 .chip { max-width: 100%; }
-.chip .chip-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; padding: 4px 0; text-align: left; }
+.chip-label { overflow-wrap: anywhere; padding: 4px 2px 4px 0; }
+.chip.editing { padding-left: 6px; }
+.said-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.said-row .said-label { margin: 0; }
+.edit-said {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+  border-radius: 999px; border: 1px solid #3A5A4C; background: #183229; color: var(--mint);
+  font-size: 14px; font-weight: 700;
+}
+.edit-said svg { width: 16px; height: 16px; }
 .chip input { border: 0; outline: none; background: #fff; border-radius: 8px; padding: 4px 8px; font: inherit; font-size: 15px; width: 12em; max-width: 100%; }
 
 .sheet-backdrop.light { background: rgba(22,32,28,0.45); align-items: center; justify-content: center; padding: 20px; }

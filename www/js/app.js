@@ -382,6 +382,7 @@ function openSheet() {
 function startListening() {
   const s = ui.sheet;
   if (!s) return;
+  $('btn-edit-said').hidden = true;
   s.phase = 'listening';
   $('sheet-result').hidden = true;
   $('type-form').hidden = true;
@@ -416,6 +417,7 @@ function startListening() {
 function showTyping(message) {
   const s = ui.sheet;
   if (!s) return;
+  $('btn-edit-said').hidden = true;
   if (s.handle) { s.handle.stop(); s.handle = null; }
   s.phase = 'typing';
   setStatus(message ? 'Type it' : 'Type it', false);
@@ -441,11 +443,19 @@ function showResult(text) {
   $('sheet-transcript').innerHTML = `<div class="said-edit">
       <label for="said-input" class="sr-only">What you said</label>
       <textarea id="said-input" rows="2" enterkeyhint="done">${esc(text)}</textarea>
-      <p class="said-hint">Heard something wrong? Tap the text above to fix it.</p></div>`;
+      <p class="said-hint">Heard something wrong? Tap <strong>Edit</strong> and fix the words.</p></div>`;
+  $('btn-edit-said').hidden = false;
   $('type-form').hidden = true;
   $('sheet-actions').hidden = true;
   renderResult();
 }
+
+$('btn-edit-said').addEventListener('click', () => {
+  const t = $('said-input');
+  if (!t) return;
+  t.focus();
+  t.setSelectionRange(t.value.length, t.value.length);
+});
 
 $('sheet-transcript').addEventListener('input', (e) => {
   if (e.target.id !== 'said-input' || !ui.sheet || ui.sheet.phase !== 'result') return;
@@ -476,7 +486,7 @@ function renderResult() {
   const shop = shopById(r.shopId) || shopById('unsorted');
   const options = data.shops.map((sh) => `<option value="${esc(sh.id)}"${sh.id === shop.id ? ' selected' : ''}>${esc(sh.name)}</option>`).join('');
   const chips = r.items.length
-    ? r.items.map((t, i) => `<span class="chip"><button type="button" class="chip-text" data-r="edit-chip" data-i="${i}" aria-label="Edit ${esc(t)}">${esc(t)}</button><button type="button" data-r="remove" data-i="${i}" aria-label="Remove ${esc(t)}">${ICONS.close}</button></span>`).join('')
+    ? r.items.map((t, i) => `<span class="chip"><span class="chip-label">${esc(t)}</span><button type="button" data-r="edit-chip" data-i="${i}" aria-label="Edit ${esc(t)}">${ICONS.edit}</button><button type="button" data-r="remove" data-i="${i}" aria-label="Remove ${esc(t)}">${ICONS.close}</button></span>`).join('')
     : '<span class="hint">No item heard. Say again or type it.</span>';
   box.innerHTML = `<p class="label">Will save as</p>
     <div class="result-shop">${badge(shop)}
@@ -511,7 +521,9 @@ $('sheet-result').addEventListener('click', async (e) => {
     input.value = r.items[i];
     input.setAttribute('aria-label', 'Item name');
     input.enterKeyHint = 'done';
-    btn.replaceWith(input);
+    const chip = btn.closest('.chip');
+    chip.classList.add('editing');
+    chip.querySelector('.chip-label').replaceWith(input);
     input.focus();
     input.select();
     const commit = () => {

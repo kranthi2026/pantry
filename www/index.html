@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="stylesheet" href="css/styles.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -136,7 +136,13 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
         </button>
       </div>
-      <p class="said-label">You said</p>
+      <div class="said-row">
+        <p class="said-label">You said</p>
+        <button type="button" class="edit-said" id="btn-edit-said" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>
+          Edit
+        </button>
+      </div>
       <div class="said" id="sheet-transcript">…</div>
       <div class="bars" id="sheet-bars" aria-hidden="true"></div>
 
@@ -181,6 +187,6 @@
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=5"></script>
+<script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>

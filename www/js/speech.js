@@ -35,9 +35,10 @@ export function listen({ onPartial = () => {}, lang = 'en-US' } = {}) {
 // Phones often end recognition at the first short pause ("add iron white shelves …"
 // and then "to Walmart" is lost). So when the engine stops while the person was
 // still talking, we start it again and join the pieces, until they are quiet for
-// a moment, tap "Done speaking", or 20 seconds pass.
+// a moment or tap "Done speaking". If nothing has been said yet, keep waiting up to 30 seconds.
 const KEEP_GOING_MS = 1600;   // restart if speech was heard this recently
-const MAX_MS = 20000;
+const WAIT_FOR_SPEECH_MS = 30000; // wait this long for the person to start talking
+const MAX_MS = 60000;
 
 function listenWeb(rec, onPartial, lang) {
   let done = '';          // text from earlier rounds
@@ -76,8 +77,10 @@ function listenWeb(rec, onPartial, lang) {
     };
     rec.onend = () => {
       const text = current();
+      const elapsed = Date.now() - started;
       const stillTalking = lastHeard && Date.now() - lastHeard < KEEP_GOING_MS;
-      if (!stopped && stillTalking && Date.now() - started < MAX_MS) {
+      const stillWaiting = !lastHeard && elapsed < WAIT_FOR_SPEECH_MS;
+      if (!stopped && (stillTalking || stillWaiting) && elapsed < MAX_MS) {
         done = text;
         roundFinal = '';
         roundInterim = '';

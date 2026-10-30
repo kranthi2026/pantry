@@ -156,8 +156,11 @@ function splitItems(text) {
     .map(capitalize);
 }
 
+// Words the phone often hears instead of "add" at the start of a sentence.
+const MISHEARD_ADD = /^(adam|ad|addie|adding|adds)\s+/;
+
 export function parse(sentence, shops) {
-  const norm = normalize(sentence);
+  const norm = normalize(sentence).replace(MISHEARD_ADD, 'add ');
   if (!norm) return { type: 'empty', shopId: null, items: [] };
 
   const newShop = NEW_SHOP_RE.exec(norm);

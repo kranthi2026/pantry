@@ -30,4 +30,6 @@ test('new shop command', () => {
   assert.equal(r.type, 'newShop');
   assert.equal(r.name, 'Home Depot');
 });
-test('empty', () => assert.equal(parse('   ', shops).type, 'empty'));
+test('add misheard as adam', () => check('Adam iron white shelves to Walmart', 'walmart', ['Iron white shelves']));
+test('add to shop', () => check('add iron white shelves to Walmart', 'walmart', ['Iron white shelves']));
+test('empty',() => assert.equal(parse('   ', shops).type, 'empty'));

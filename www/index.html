@@ -137,7 +137,7 @@
         </button>
       </div>
       <p class="said-label">You said</p>
-      <p class="said" id="sheet-transcript">…</p>
+      <div class="said" id="sheet-transcript">…</div>
       <div class="bars" id="sheet-bars" aria-hidden="true"></div>
 
       <form class="type-instead" id="type-form" hidden autocomplete="off">
@@ -153,6 +153,26 @@
         <button type="button" class="ghost-btn light" id="btn-stop">Done speaking</button>
       </div>
     </div>
+  </div>
+
+  <!-- ===================== EDIT ITEM ===================== -->
+  <div class="sheet-backdrop light" id="edit-sheet" hidden>
+    <form class="edit-card" id="edit-form" role="dialog" aria-modal="true" aria-labelledby="edit-title" autocomplete="off">
+      <h2 id="edit-title">Edit item</h2>
+      <div class="form-row">
+        <label for="edit-text">Item</label>
+        <input id="edit-text" type="text" required enterkeyhint="done">
+      </div>
+      <div class="form-row">
+        <label for="edit-shop">Shop</label>
+        <select id="edit-shop"></select>
+      </div>
+      <div class="form-buttons">
+        <button type="button" class="ghost-btn" id="edit-cancel">Cancel</button>
+        <button type="submit" class="primary-btn small">Save</button>
+      </div>
+      <button type="button" class="danger-link" id="edit-delete">Delete item</button>
+    </form>
   </div>
 
   <div class="toast" id="toast" role="status" hidden>

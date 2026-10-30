@@ -135,6 +135,8 @@ function renderHome() {
     html += `<p class="empty-note">${q ? 'Only bought items match.' : 'All done here!'}</p>`;
   }
 
+  if (anyOpen) html += '<p class="tip">Tap an item when bought · press and hold to edit</p>';
+
   if (done.length) {
     html += `<section class="done-section" aria-label="Done"><div class="done-head">
         <h2 class="done-label">Done · ${done.length}</h2>
@@ -236,8 +238,77 @@ $('add-form').addEventListener('submit', async (e) => {
   toast(`Added ${text} to ${shopById(shopId).name}`, restore(snap));
 });
 
+// ---------------------------------------------------------------- long-press an item to edit it
+let pressTimer = null;
+let suppressClick = false;
+let pressStart = null;
+$('list').addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest('[data-toggle]');
+  if (!btn) return;
+  suppressClick = false;
+  pressStart = { x: e.clientX, y: e.clientY };
+  clearTimeout(pressTimer);
+  pressTimer = setTimeout(() => {
+    suppressClick = true;
+    if (navigator.vibrate) navigator.vibrate(15);
+    openEdit(btn.dataset.toggle);
+  }, 500);
+});
+const cancelPress = () => clearTimeout(pressTimer);
+$('list').addEventListener('pointerup', cancelPress);
+$('list').addEventListener('pointercancel', cancelPress);
+$('list').addEventListener('pointermove', (e) => {
+  if (pressStart && Math.hypot(e.clientX - pressStart.x, e.clientY - pressStart.y) > 10) cancelPress();
+});
+$('list').addEventListener('contextmenu', (e) => {
+  const btn = e.target.closest('[data-toggle]');
+  if (!btn) return;
+  e.preventDefault();
+  cancelPress();
+  if (!suppressClick) { suppressClick = true; openEdit(btn.dataset.toggle); }
+});
+
+let editingItemId = null;
+function openEdit(id) {
+  hideToast();
+  const item = data.items.find((i) => i.id === id);
+  if (!item) return;
+  editingItemId = id;
+  $('edit-text').value = item.text;
+  $('edit-shop').innerHTML = data.shops.map((s) => `<option value="${esc(s.id)}"${s.id === item.shopId ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  $('edit-sheet').hidden = false;
+  $('edit-text').focus();
+}
+function closeEdit() { editingItemId = null; $('edit-sheet').hidden = true; }
+$('edit-cancel').addEventListener('click', closeEdit);
+$('edit-sheet').addEventListener('click', (e) => { if (e.target === $('edit-sheet')) closeEdit(); });
+$('edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const item = data.items.find((i) => i.id === editingItemId);
+  const text = $('edit-text').value.trim();
+  if (!item || !text) return;
+  const snap = snapshot();
+  item.text = text.charAt(0).toUpperCase() + text.slice(1);
+  item.shopId = $('edit-shop').value;
+  await persist();
+  closeEdit();
+  renderHome();
+  toast(`Saved ${item.text} in ${shopById(item.shopId).name}`, restore(snap));
+});
+$('edit-delete').addEventListener('click', async () => {
+  const item = data.items.find((i) => i.id === editingItemId);
+  if (!item) return;
+  const snap = snapshot();
+  data.items = data.items.filter((i) => i.id !== item.id);
+  await persist();
+  closeEdit();
+  renderHome();
+  toast(`${item.text} deleted`, restore(snap));
+});
+
 $('list').addEventListener('click', async (e) => {
   const toggle = e.target.closest('[data-toggle]');
+  if (toggle && suppressClick) { suppressClick = false; return; }
   if (toggle) {
     const item = data.items.find((i) => i.id === toggle.dataset.toggle);
     if (!item) return;
@@ -279,9 +350,14 @@ $('list').addEventListener('click', async (e) => {
 
 // ---------------------------------------------------------------- LISTENING sheet
 function bars(still) {
-  const heights = [10, 18, 28, 40, 24, 46, 56, 38, 50, 56, 44, 52, 36, 48, 30, 42, 22, 32, 16, 12];
-  $('sheet-bars').innerHTML = heights.map((h, i) => `<span style="height:${h}px;animation-delay:${(i % 5) * 0.12}s"></span>`).join('');
-  $('sheet-bars').classList.toggle('still', !!still);
+  // A calm glowing mic with soft rings rippling out while listening.
+  const el = $('sheet-bars');
+  if (!el.dataset.ready) {
+    el.innerHTML = '<span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>' +
+      '<span class="orb"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></span>';
+    el.dataset.ready = '1';
+  }
+  el.classList.toggle('still', !!still);
 }
 
 function setStatus(text, live) {
@@ -361,11 +437,25 @@ function showResult(text) {
   s.result = parse(text, data.shops);
   setStatus('Got it', false);
   bars(true);
-  $('sheet-transcript').textContent = `“${text}”`;
+  // What was heard is editable: fix a misheard word and the shop/items update as you type.
+  $('sheet-transcript').innerHTML = `<div class="said-edit">
+      <label for="said-input" class="sr-only">What you said</label>
+      <textarea id="said-input" rows="2" enterkeyhint="done">${esc(text)}</textarea>
+      <p class="said-hint">Heard something wrong? Tap the text above to fix it.</p></div>`;
   $('type-form').hidden = true;
   $('sheet-actions').hidden = true;
   renderResult();
 }
+
+$('sheet-transcript').addEventListener('input', (e) => {
+  if (e.target.id !== 'said-input' || !ui.sheet || ui.sheet.phase !== 'result') return;
+  ui.sheet.transcript = e.target.value;
+  ui.sheet.result = parse(e.target.value, data.shops);
+  renderResult();
+});
+$('sheet-transcript').addEventListener('keydown', (e) => {
+  if (e.target.id === 'said-input' && e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+});
 
 function renderResult() {
   const s = ui.sheet;
@@ -386,7 +476,7 @@ function renderResult() {
   const shop = shopById(r.shopId) || shopById('unsorted');
   const options = data.shops.map((sh) => `<option value="${esc(sh.id)}"${sh.id === shop.id ? ' selected' : ''}>${esc(sh.name)}</option>`).join('');
   const chips = r.items.length
-    ? r.items.map((t, i) => `<span class="chip">${esc(t)}<button type="button" data-r="remove" data-i="${i}" aria-label="Remove ${esc(t)}">${ICONS.close}</button></span>`).join('')
+    ? r.items.map((t, i) => `<span class="chip"><button type="button" class="chip-text" data-r="edit-chip" data-i="${i}" aria-label="Edit ${esc(t)}">${esc(t)}</button><button type="button" data-r="remove" data-i="${i}" aria-label="Remove ${esc(t)}">${ICONS.close}</button></span>`).join('')
     : '<span class="hint">No item heard. Say again or type it.</span>';
   box.innerHTML = `<p class="label">Will save as</p>
     <div class="result-shop">${badge(shop)}
@@ -414,6 +504,24 @@ $('sheet-result').addEventListener('click', async (e) => {
   if (act === 'remove') {
     r.items.splice(Number(btn.dataset.i), 1);
     renderResult();
+  } else if (act === 'edit-chip') {
+    const i = Number(btn.dataset.i);
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = r.items[i];
+    input.setAttribute('aria-label', 'Item name');
+    input.enterKeyHint = 'done';
+    btn.replaceWith(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      const v = input.value.trim();
+      if (v) r.items[i] = v.charAt(0).toUpperCase() + v.slice(1);
+      else r.items.splice(i, 1);
+      renderResult();
+    };
+    input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } });
+    input.addEventListener('blur', commit, { once: true });
   } else if (act === 'again') {
     startListening();
   } else if (act === 'save') {

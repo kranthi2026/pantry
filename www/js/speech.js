@@ -32,30 +32,60 @@ export function listen({ onPartial = () => {}, lang = 'en-US' } = {}) {
   return { promise: Promise.reject(new Error('unsupported')), stop() {} };
 }
 
+// Phones often end recognition at the first short pause ("add iron white shelves …"
+// and then "to Walmart" is lost). So when the engine stops while the person was
+// still talking, we start it again and join the pieces, until they are quiet for
+// a moment, tap "Done speaking", or 20 seconds pass.
+const KEEP_GOING_MS = 1600;   // restart if speech was heard this recently
+const MAX_MS = 20000;
+
 function listenWeb(rec, onPartial, lang) {
-  let finalText = '';
-  let latest = '';
+  let done = '';          // text from earlier rounds
+  let roundFinal = '';    // final text in the current round
+  let roundInterim = '';
+  let lastHeard = 0;
+  let stopped = false;
+  const started = Date.now();
   rec.lang = lang;
   rec.interimResults = true;
   rec.continuous = false;
   rec.maxAlternatives = 1;
 
+  const join = (...parts) => parts.map((p) => p.trim()).filter(Boolean).join(' ');
+  const current = () => join(done, roundFinal || roundInterim);
+
   const promise = new Promise((resolve, reject) => {
     rec.onresult = (event) => {
+      let fin = '';
       let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const r = event.results[i];
-        if (r.isFinal) finalText += r[0].transcript;
-        else interim += r[0].transcript;
+        if (r.isFinal) fin += r[0].transcript + ' ';
+        else interim += r[0].transcript + ' ';
       }
-      latest = (finalText + ' ' + interim).trim();
-      onPartial(latest);
+      roundFinal = join(fin, interim);
+      roundInterim = '';
+      lastHeard = Date.now();
+      onPartial(current());
     };
     rec.onerror = (e) => {
-      if (e.error === 'no-speech' || e.error === 'aborted') resolve(latest);
+      if (e.error === 'no-speech' || e.error === 'aborted') return; // onend decides
+      stopped = true;
+      if (current()) resolve(current());
       else reject(new Error(e.error || 'speech-error'));
     };
-    rec.onend = () => resolve((finalText || latest).trim());
+    rec.onend = () => {
+      const text = current();
+      const stillTalking = lastHeard && Date.now() - lastHeard < KEEP_GOING_MS;
+      if (!stopped && stillTalking && Date.now() - started < MAX_MS) {
+        done = text;
+        roundFinal = '';
+        roundInterim = '';
+        try { rec.start(); return; } catch (err) { /* fall through and finish */ }
+      }
+      stopped = true;
+      resolve(text);
+    };
     try {
       rec.start();
     } catch (e) {
@@ -63,7 +93,7 @@ function listenWeb(rec, onPartial, lang) {
     }
   });
 
-  return { promise, stop: () => { try { rec.stop(); } catch (e) { /* already stopped */ } } };
+  return { promise, stop: () => { stopped = true; try { rec.stop(); } catch (e) { /* already stopped */ } } };
 }
 
 function listenNative(plugin, onPartial, lang) {

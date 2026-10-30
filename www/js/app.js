@@ -80,7 +80,6 @@ function renderHome() {
   const listsWithItems = new Set(open.map((i) => i.shopId)).size;
   $('summary').textContent = `${open.length} ${open.length === 1 ? 'item' : 'items'} across ${listsWithItems} ${listsWithItems === 1 ? 'list' : 'lists'}`;
   $('cart-count').textContent = open.length;
-  $('btn-cart').setAttribute('aria-pressed', String(ui.picked === 'all'));
   $('btn-search').setAttribute('aria-pressed', String(ui.searching));
   $('search-row').hidden = !ui.searching;
   $('add-form').hidden = ui.searching;
@@ -104,7 +103,13 @@ function renderHome() {
     .join('');
   $('rail').innerHTML = rail;
 
-  // items
+  $('list').innerHTML = listHtml(picked, q);
+  if (!$('cart').hidden) renderCart();
+}
+
+// Builds the grouped item list (used by Home and by the Cart page).
+function listHtml(picked, q, inCart = false) {
+  const open = data.items.filter((i) => !i.done);
   const shown = picked ? [picked] : data.shops;
   let html = '';
   let anyOpen = false;
@@ -130,7 +135,7 @@ function renderHome() {
       html += `<p class="empty-note">Nothing matches “${esc(ui.query.trim())}”.</p>
         <button type="button" class="dashed-btn" data-action="add-query">+ Add “${esc(ui.query.trim())}” to ${esc(target)}</button>`;
     } else {
-      html += `<p class="empty-note">${picked ? 'Nothing to buy here.' : 'Your lists are empty.'} Tap the mic and say something like “buy milk from Costco”, or type above.</p>`;
+      html += `<p class="empty-note">${picked ? 'Nothing to buy here.' : 'Your cart is empty.'} Tap the mic and say something like “buy milk from Costco”${inCart ? '' : ', or type above'}.</p>`;
     }
   } else if (!anyOpen) {
     html += `<p class="empty-note">${q ? 'Only bought items match.' : 'All done here!'}</p>`;
@@ -150,7 +155,7 @@ function renderHome() {
           <span class="from">${esc(shop ? shop.name : '')}</span></button></li>`;
       }).join('') + '</ul></section>';
   }
-  $('list').innerHTML = html;
+  return html;
 }
 
 // ---------------------------------------------------------------- SHOPS render
@@ -195,6 +200,8 @@ function showHome() {
 }
 window.addEventListener('popstate', () => {
   if (ui.sheet) { closeSheet(false); return; }
+  if (!$('edit-sheet').hidden) { closeEdit(); return; }
+  if (!$('cart').hidden) { leaveCart(); return; }
   if (!$('shops').hidden) showHome();
 });
 
@@ -202,11 +209,37 @@ window.addEventListener('popstate', () => {
 $('rail').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-pick]');
   if (!btn) return;
-  ui.picked = btn.dataset.pick;
+  // Tap a shop to see only its items; tap it again to see every shop.
+  ui.picked = ui.picked === btn.dataset.pick ? 'all' : btn.dataset.pick;
   renderHome();
 });
 
-$('btn-cart').addEventListener('click', () => { ui.picked = 'all'; renderHome(); });
+// ---------------------------------------------------------------- CART page: every item in one place
+function renderCart() {
+  const open = data.items.filter((i) => !i.done);
+  const lists = new Set(open.map((i) => i.shopId)).size;
+  $('cart-summary').textContent = `${open.length} ${open.length === 1 ? 'item' : 'items'} to get from ${lists} ${lists === 1 ? 'list' : 'lists'}`;
+  $('cart-count-2').textContent = open.length;
+  $('cart-list').innerHTML = listHtml(null, '', true);
+}
+function showCart(push = true) {
+  $('home').hidden = true;
+  $('cart').hidden = false;
+  renderCart();
+  $('cart-scroll').scrollTop = 0;
+  if (push) history.pushState({ view: 'cart' }, '');
+}
+function leaveCart() {
+  $('cart').hidden = true;
+  $('home').hidden = false;
+  renderHome();
+}
+$('btn-cart').addEventListener('click', () => showCart());
+$('btn-cart-back').addEventListener('click', () => {
+  if (history.state && history.state.view === 'cart') history.back();
+  else leaveCart();
+});
+$('btn-mic-cart').addEventListener('click', () => openSheet());
 
 $('btn-search').addEventListener('click', () => {
   if (ui.searching) return closeSearch();
@@ -279,7 +312,7 @@ $('edit-delete').addEventListener('click', async () => {
   toast(`${item.text} deleted`, restore(snap));
 });
 
-$('list').addEventListener('click', async (e) => {
+async function onListClick(e, inCart) {
   const editBtn = e.target.closest('[data-edit-item]');
   if (editBtn) { openEdit(editBtn.dataset.editItem); return; }
   const toggle = e.target.closest('[data-toggle]');
@@ -300,8 +333,8 @@ $('list').addEventListener('click', async (e) => {
   const action = e.target.closest('[data-action]');
   if (!action) return;
   if (action.dataset.action === 'clear') {
-    const q = query();
-    const scope = ui.picked === 'all' ? null : ui.picked;
+    const q = inCart ? '' : query();
+    const scope = inCart || ui.picked === 'all' ? null : ui.picked;
     const toRemove = data.items.filter((i) => i.done && (!scope || i.shopId === scope) && matches(i.text, q));
     if (!toRemove.length) return;
     const snap = snapshot();
@@ -320,7 +353,9 @@ $('list').addEventListener('click', async (e) => {
     closeSearch();
     toast(`Added ${text} to ${shopById(shopId).name}`, restore(snap));
   }
-});
+}
+$('list').addEventListener('click', (e) => onListClick(e, false));
+$('cart-list').addEventListener('click', (e) => onListClick(e, true));
 
 // ---------------------------------------------------------------- LISTENING sheet
 function bars(still) {

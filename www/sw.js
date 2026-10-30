@@ -1,5 +1,5 @@
 // Keeps Pantry working offline when installed from the browser.
-const CACHE = 'pantry-v7';
+const CACHE = 'pantry-v8';
 const FILES = [
   './',
   './index.html',

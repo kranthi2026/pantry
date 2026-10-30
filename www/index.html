@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
 <div id="app">
@@ -34,7 +34,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9z"/><path d="M5 13v7h14v-7"/><path d="M10 20v-4h4v4"/></svg>
           Shops
         </button>
-        <button type="button" class="round-btn cart" id="btn-cart" aria-label="Cart, all items" aria-pressed="true">
+        <button type="button" class="round-btn cart" id="btn-cart" aria-label="Open cart, all items">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 7H6"/></svg>
           <span class="badge" id="cart-count" aria-hidden="true">0</span>
         </button>
@@ -68,6 +68,30 @@
 
     <div class="fade" aria-hidden="true"></div>
     <button type="button" class="mic-fab" id="btn-mic" aria-label="Speak an item">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+    </button>
+  </section>
+
+  <!-- ===================== CART ===================== -->
+  <section id="cart" class="screen" aria-label="Cart" hidden>
+    <header class="cart-header">
+      <button type="button" class="round-btn back" id="btn-cart-back" aria-label="Back to lists">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="title-block">
+        <h1>Cart</h1>
+        <p class="subtle" id="cart-summary">0 items</p>
+      </div>
+      <span class="round-btn cart big" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 7H6"/></svg>
+        <span class="badge" id="cart-count-2">0</span>
+      </span>
+    </header>
+    <div class="cart-scroll" id="cart-scroll">
+      <div id="cart-list" class="cart-list"></div>
+    </div>
+    <div class="fade full" aria-hidden="true"></div>
+    <button type="button" class="mic-fab" id="btn-mic-cart" aria-label="Speak an item">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
     </button>
   </section>
@@ -187,6 +211,6 @@
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=7"></script>
+<script type="module" src="js/app.js?v=8"></script>
 </body>
 </html>
